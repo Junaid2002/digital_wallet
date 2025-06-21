@@ -1,15 +1,19 @@
 const db = require("../db/db");
 
-exports.addTransaction = (userId, kind, amt, updatedBal) => {
+exports.addTransaction = (userId, type, amount, balance) => {
   return db.query(
-    "INSERT INTO transactions (user_id, kind, amt, updated_bal) VALUES ($1, $2, $3, $4)",
-    [userId, kind, amt, updatedBal]
+    `INSERT INTO transactions (user_id, type, amount, balance, created_at)
+     VALUES ($1, $2, $3, $4, NOW())`,
+    [userId, type, amount, balance]
   );
 };
 
 exports.getUserTransactions = (userId) => {
   return db.query(
-    "SELECT kind, amt, updated_bal, timestamp FROM transactions WHERE user_id = $1 ORDER BY timestamp DESC",
+    `SELECT type, amount, balance, created_at
+     FROM transactions
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
     [userId]
   );
 };

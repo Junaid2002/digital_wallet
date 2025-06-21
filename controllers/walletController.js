@@ -2,6 +2,7 @@ const userModel = require("../models/userModel");
 const transactionModel = require("../models/transactionModel");
 const axios = require("axios");
 
+// Fund user account
 exports.fundAccount = async (req, res, next) => {
   try {
     const amt = parseFloat(req.body.amt);
@@ -13,7 +14,9 @@ exports.fundAccount = async (req, res, next) => {
     const updatedBal = currentBal + amt;
 
     await userModel.updateBalance(req.user.id, updatedBal);
-    await transactionModel.addTransaction(req.user.id, "credit", amt, updatedBal);
+
+    // Record transaction as "fund"
+    await transactionModel.addTransaction(req.user.id, "fund", amt, updatedBal);
 
     res.json({ balance: updatedBal });
   } catch (err) {
@@ -22,6 +25,7 @@ exports.fundAccount = async (req, res, next) => {
   }
 };
 
+// Pay another user
 exports.payUser = async (req, res, next) => {
   try {
     const { to, amt } = req.body;
@@ -40,7 +44,7 @@ exports.payUser = async (req, res, next) => {
     const toUser = toUserQuery.rows[0];
 
     if (!toUser) {
-      return res.status(400).json({ error: "Recipient not found" });
+      return res.status(404).json({ error: "Recipient not found" });
     }
 
     const senderNewBal = senderBal - amount;
@@ -49,8 +53,11 @@ exports.payUser = async (req, res, next) => {
     await userModel.updateBalance(req.user.id, senderNewBal);
     await userModel.updateBalance(toUser.id, recipientNewBal);
 
-    await transactionModel.addTransaction(req.user.id, "debit", amount, senderNewBal);
-    await transactionModel.addTransaction(toUser.id, "credit", amount, recipientNewBal);
+    // Sender: transaction type "transfer"
+    await transactionModel.addTransaction(req.user.id, "transfer", amount, senderNewBal);
+
+    // Recipient: you can use "fund" or "receive" (adjust to your CHECK constraint)
+    await transactionModel.addTransaction(toUser.id, "fund", amount, recipientNewBal);
 
     res.json({ balance: senderNewBal });
   } catch (err) {
@@ -59,6 +66,7 @@ exports.payUser = async (req, res, next) => {
   }
 };
 
+// Get balance, with optional currency conversion
 exports.getBalance = async (req, res, next) => {
   try {
     const currency = req.query.currency;
