@@ -2,7 +2,6 @@ const userModel = require("../models/userModel");
 const transactionModel = require("../models/transactionModel");
 const axios = require("axios");
 
-// Fund user account
 exports.fundAccount = async (req, res, next) => {
   try {
     const amt = parseFloat(req.body.amt);
@@ -14,8 +13,6 @@ exports.fundAccount = async (req, res, next) => {
     const updatedBal = currentBal + amt;
 
     await userModel.updateBalance(req.user.id, updatedBal);
-
-    // Record transaction as "fund"
     await transactionModel.addTransaction(req.user.id, "fund", amt, updatedBal);
 
     res.json({ balance: updatedBal });
@@ -25,7 +22,6 @@ exports.fundAccount = async (req, res, next) => {
   }
 };
 
-// Pay another user
 exports.payUser = async (req, res, next) => {
   try {
     const { to, amt } = req.body;
@@ -53,10 +49,7 @@ exports.payUser = async (req, res, next) => {
     await userModel.updateBalance(req.user.id, senderNewBal);
     await userModel.updateBalance(toUser.id, recipientNewBal);
 
-    // Sender: transaction type "transfer"
     await transactionModel.addTransaction(req.user.id, "transfer", amount, senderNewBal);
-
-    // Recipient: you can use "fund" or "receive" (adjust to your CHECK constraint)
     await transactionModel.addTransaction(toUser.id, "fund", amount, recipientNewBal);
 
     res.json({ balance: senderNewBal });
@@ -66,7 +59,6 @@ exports.payUser = async (req, res, next) => {
   }
 };
 
-// Get balance, with optional currency conversion
 exports.getBalance = async (req, res, next) => {
   try {
     const currency = req.query.currency;
@@ -94,6 +86,16 @@ exports.getBalance = async (req, res, next) => {
     res.json({ balance: bal, currency: "INR" });
   } catch (err) {
     console.error("Balance Error:", err);
+    next(err);
+  }
+};
+
+exports.getTransactionHistory = async (req, res, next) => {
+  try {
+    const result = await transactionModel.getUserTransactions(req.user.id);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Transaction History Error:", err);
     next(err);
   }
 };

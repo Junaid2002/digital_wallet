@@ -13,9 +13,9 @@ const productRoutes = require("./routes/productRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 
 app.use("/api/auth", authRoutes);
-app.use("/api/wallet", walletRoutes);
+app.use("/api/wallet", walletRoutes);         
 app.use("/api/product", productRoutes);
-app.use("/api/transactions", transactionRoutes);
+app.use("/api/transactions", transactionRoutes); 
 
 app.get("/", (req, res) => {
   res.send("Digital Wallet API is running");
